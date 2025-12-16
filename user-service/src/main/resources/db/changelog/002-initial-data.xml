@@ -1,0 +1,31 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-latest.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="roles-table-data-1" author="Kireenko Makar">
+        <insert tableName="roles">
+            <column name="id" value="1" type="integer"/>
+            <column name="name" value="ROLE_USER" type="varchar(50)"/>
+        </insert>
+        <insert tableName="roles">
+            <column name="id" value="2" type="integer"/>
+            <column name="name" value="ROLE_ADMIN" type="varchar(50)"/>
+        </insert>
+    </changeSet>
+    <changeSet id="users-table-data-1" author="Kireenko Makar">
+        <loadData tableName="users" file="db/data/users.csv">
+            <column name="id" type="bigint"/>
+            <column name="name" type="varchar(100)"/>
+            <column name="email" type="varchar(150)"/>
+            <column name="phone_number" type="varchar(20)"/>
+            <column name="password" type="varchar(255)"/>
+        </loadData>
+    </changeSet>
+    <changeSet id="users_roles-table-data-1-1" author="Kireenko Makar">
+        <loadData tableName="users_roles" file="db/data/users_roles.csv">
+            <column name="user_id" type="bigint"/>
+            <column name="role_id" type="bigint"/>
+        </loadData>
+    </changeSet>
+    <changeSet id="update-users-id-sequence-1" author="Kireenko Makar">
+        <sql>SELECT setval('users_id_seq', (SELECT MAX(id) FROM users));</sql>
+    </changeSet>
+</databaseChangeLog>

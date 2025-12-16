@@ -1,0 +1,9 @@
+id,brand,model,year,rental_price,status
+4,Chevrolet,Malibu,2018,35.00,Rented
+5,Tesla,Model 3,2022,100.00,Unavailable
+8,Mercedes,C-Class,2021,80.00,Rented
+7,Audi,A4,2019,65.00,Rented
+2,Honda,Civic,2019,45.00,Available
+3,Ford,Focus,2021,50.00,Available
+6,BMW,320i,2020,70.00,Available
+1,Toyota,Corolla,2020,40.00,Available

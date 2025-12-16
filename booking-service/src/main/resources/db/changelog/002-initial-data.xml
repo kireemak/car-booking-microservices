@@ -1,0 +1,28 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="booking-service-1-data-users-view" author="Kireenko Makar">
+        <loadData tableName="users_view" file="db/data/users_view.csv">
+            <column name="id" type="bigint"/>
+            <column name="name" type="varchar(100)"/>
+            <column name="email" type="varchar(150)"/>
+            <column name="phone_number" type="varchar(20)"/>
+        </loadData>
+    </changeSet>
+
+    <changeSet id="booking-service-2-data-bookings" author="Kireenko Makar">
+        <loadData tableName="bookings" file="db/data/bookings.csv">
+            <column name="id" type="bigint"/>
+            <column name="user_id" type="bigint"/>
+            <column name="car_id" type="bigint"/>
+            <column name="start_date" type="date"/>
+            <column name="end_date" type="date"/>
+            <column name="status" type="varchar(20)"/>
+        </loadData>
+    </changeSet>
+
+    <changeSet id="booking-service-3-update-bookings-id-sequence" author="Kireenko Makar">
+        <sql>SELECT setval('bookings_id_seq', (SELECT MAX(id) FROM bookings));</sql>
+    </changeSet>
+</databaseChangeLog>

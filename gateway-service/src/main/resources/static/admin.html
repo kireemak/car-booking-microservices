@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Panel</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="container">
+    <h1>Admin Panel</h1>
+    <div class="tabs">
+        <button class="tab-link active" onclick="openTab(event, 'Users')">User Management</button>
+        <button class="tab-link" onclick="openTab(event, 'Cars')">Car Management</button>
+        <button class="tab-link" onclick="openTab(event, 'Bookings')">Booking Management</button>
+    </div>
+
+    <div id="Users" class="tab-content" style="display:block;">
+        <h2>Users</h2>
+        <table id="usersTable">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <div id="Cars" class="tab-content">
+        <h2>Cars</h2>
+        <button onclick="openCarModal(null)">Add New Car</button>
+        <table id="carsTable">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Brand</th>
+                <th>Model</th>
+                <th>Year</th>
+                <th>Price</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <div id="Bookings" class="tab-content">
+        <h2>Bookings</h2>
+        <table id="bookingsTable">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>User ID</th>
+                <th>Car ID</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+                <th>Status</th>
+            </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+    <a href="index.html" style="margin-top: 20px; display: inline-block;">Back to Main Page</a>
+</div>
+
+<div id="carModal" class="modal">
+    <div class="modal-content">
+        <span class="close-button" onclick="closeCarModal()">&times;</span>
+        <h2 id="modalTitle">Add/Edit Car</h2>
+        <form id="carForm">
+            <input type="hidden" id="carId">
+            <label>Brand:</label>
+            <input type="text" id="carBrand" required>
+            <label>Model:</label>
+            <input type="text" id="carModel" required>
+            <label>Year:</label>
+            <input type="number" id="carYear" required>
+            <label>Rental Price:</label>
+            <input type="number" id="carPrice" step="0.01" required>
+            <label>Status:</label>
+            <select id="carStatus">
+                <option value="Available">Available</option>
+                <option value="Rented">Rented</option>
+                <option value="Maintenance">Maintenance</option>
+            </select>
+            <button type="submit">Save Car</button>
+        </form>
+    </div>
+</div>
+
+<script src="js/admin.js"></script>
+</body>
+</html>

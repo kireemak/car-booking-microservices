@@ -1,0 +1,11 @@
+id,name,email,phone_number,password
+12,User123,user123@gmail.com,+3123548797,$2a$10$Ia/FX.m1i/CXFy8lPgEqZexM8lyF56JAnNwmzuXvGB43BwGvx8/re
+13,Admin12345,admin@admin.com,+1234567890,$2a$10$ZsyR0FtDmps7LI3gF4Qf9.DwEJPOKm9SoPzI371VB7QqBFyZ4gCA2
+5,Charlie Davis,charlie.davis@example.com,3333333333,$2a$10$Ia/FX.m1i/CXFy8lPgEqZexM8lyF56JAnNwmzuXvGB43BwGvx8/re
+3,Alice Johnson,alice.johnson@example.com,5555555555,$2a$10$Ia/FX.m1i/CXFy8lPgEqZexM8lyF56JAnNwmzuXvGB43BwGvx8/re
+1,John Doe,john.doe@example.com,1234567890,$2a$10$Ia/FX.m1i/CXFy8lPgEqZexM8lyF56JAnNwmzuXvGB43BwGvx8/re
+7,Evan Ford,evan.ford@example.com,1111111111,$2a$10$Ia/FX.m1i/CXFy8lPgEqZexM8lyF56JAnNwmzuXvGB43BwGvx8/re
+8,Fiona Green,fiona.green@example.com,9999999999,$2a$10$Ia/FX.m1i/CXFy8lPgEqZexM8lyF56JAnNwmzuXvGB43BwGvx8/re
+2,Jane Smith,jane.smith@example.com,0987654321,$2a$10$Ia/FX.m1i/CXFy8lPgEqZexM8lyF56JAnNwmzuXvGB43BwGvx8/re
+4,Bob Brown,bob.brown@example.com,4444444444,$2a$10$Ia/FX.m1i/CXFy8lPgEqZexM8lyF56JAnNwmzuXvGB43BwGvx8/re
+6,Diana Evans,diana.evans@example.com,2222222222,$2a$10$Ia/FX.m1i/CXFy8lPgEqZexM8lyF56JAnNwmzuXvGB43BwGvx8/re
