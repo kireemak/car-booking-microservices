@@ -3,6 +3,7 @@ package by.kireenko.BookingService.kafka;
 import by.kireenko.BookingService.config.KafkaTopicConfig;
 import by.kireenko.BookingService.dto.BookingEventDto;
 import by.kireenko.BookingService.dto.CarDto;
+import by.kireenko.BookingService.dto.event.BookingRequestedEvent;
 import by.kireenko.BookingService.models.Booking;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,7 +14,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class BookingEventPublisher {
-    private final KafkaTemplate<String, BookingEventDto> kafkaTemplate;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
 
     public void sendBookingCreatedEvent(Booking booking) {
         log.info("Sending Booking CREATED event for booking ID: {}", booking.getId());
@@ -30,5 +31,11 @@ public class BookingEventPublisher {
     public void sendBookingDeletedEvent(Long bookingId) {
         log.info("Sending Booking DELETED event for booking ID: {}", bookingId);
         kafkaTemplate.send(KafkaTopicConfig.BOOKING_EVENTS_TOPIC, bookingId.toString(), null);
+    }
+
+    public void sendBookingRequestedEvent(BookingRequestedEvent event) {
+        log.info("Publishing Booking REQUESTED event for Booking ID: {} and Car ID: {}",
+                event.getBookingId(), event.getCarId());
+        kafkaTemplate.send("booking-requests-topic", event.getBookingId().toString(), event);
     }
 }

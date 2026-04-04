@@ -3,6 +3,7 @@ package services;
 import by.kireenko.BookingService.client.CarServiceClient;
 import by.kireenko.BookingService.dto.CarDto;
 import by.kireenko.BookingService.dto.CreateBookingRequestDto;
+import by.kireenko.BookingService.dto.event.BookingRequestedEvent;
 import by.kireenko.BookingService.error.NotValidResourceState;
 import by.kireenko.BookingService.kafka.BookingEventPublisher;
 import by.kireenko.BookingService.models.Booking;
@@ -91,17 +92,7 @@ public class BookingServiceTest {
     }
 
     @Test
-    public void createBookingWithCheck_WhenCarIsntAvailable_ShouldThrowException() {
-        CreateBookingRequestDto request = new CreateBookingRequestDto();
-        request.setCarId(1L);
-
-        doThrow(WebClientResponseException.Forbidden.class).when(carServiceClient).reserveCar(1L);
-
-        assertThrows(NotValidResourceState.class, () -> bookingService.createBookingWithCheck(request));
-    }
-
-    @Test
-    public void createBookingWithCheck_WhenSuccess_ShouldReturnBooking() {
+    public void createBookingWithCheck_ShouldSavePendingBookingAndPublishEvent() {
         Long carId = 1L;
         CreateBookingRequestDto request = new CreateBookingRequestDto();
         request.setCarId(carId);
@@ -109,35 +100,23 @@ public class BookingServiceTest {
         request.setEndDate(LocalDate.now().plusDays(2));
 
         UserView user = new UserView(1L, "user", "mail", "phone");
-        CarDto carDto = new CarDto(carId, "Brand", "Model", 2020, 100.0, "Available");
 
-        doNothing().when(carServiceClient).reserveCar(carId);
-
-        when(carServiceClient.getCarById(carId)).thenReturn(carDto);
         when(userViewService.getCurrentUserView()).thenReturn(user);
-        when(bookingRepository.save(any(Booking.class))).thenAnswer(i -> i.getArgument(0));
+
+        when(bookingRepository.save(any(Booking.class))).thenAnswer(invocation -> {
+            Booking b = invocation.getArgument(0);
+            b.setId(100L);
+            return b;
+        });
 
         Booking result = bookingService.createBookingWithCheck(request);
 
         assertThat(result).isNotNull();
         assertThat(result.getCarId()).isEqualTo(carId);
-        assertThat(result.getStatus()).isEqualTo("Created");
+        assertThat(result.getStatus()).isEqualTo("PENDING");
 
-        verify(carServiceClient).reserveCar(carId);
-        verify(bookingEventPublisher).sendBookingCreatedEvent(any(Booking.class));
-    }
-
-    @Test
-    public void createBookingWithCheck_WhenSaveFails_ShouldCompensate() {
-        Long carId = 1L;
-        CreateBookingRequestDto request = new CreateBookingRequestDto();
-        request.setCarId(carId);
-
-        doNothing().when(carServiceClient).reserveCar(carId);
-        when(carServiceClient.getCarById(carId)).thenThrow(new RuntimeException("DB Error"));
-
-        assertThrows(RuntimeException.class, () -> bookingService.createBookingWithCheck(request));
-
-        verify(carServiceClient).releaseCar(carId);
+        verify(bookingRepository).save(any(Booking.class));
+        verify(bookingEventPublisher).sendBookingRequestedEvent(any(BookingRequestedEvent.class));
+        verifyNoInteractions(carServiceClient);
     }
 }

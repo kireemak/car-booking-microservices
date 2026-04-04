@@ -2,6 +2,9 @@ package by.kireenko.BookingService.config;
 
 import by.kireenko.BookingService.dto.BookingEventDto;
 import by.kireenko.BookingService.dto.UserDto;
+import by.kireenko.BookingService.dto.event.BookingRequestedEvent;
+import by.kireenko.BookingService.dto.event.CarReservationFailedEvent;
+import by.kireenko.BookingService.dto.event.CarReservedEvent;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.support.converter.RecordMessageConverter;
@@ -23,6 +26,9 @@ public class KafkaConfig {
         Map<String, Class<?>> mappings = new HashMap<>();
         mappings.put("booking", BookingEventDto.class);
         mappings.put("user", UserDto.class);
+        mappings.put("bookingRequested", BookingRequestedEvent.class);
+        mappings.put("carReserved", CarReservedEvent.class);
+        mappings.put("carReservationFailed", CarReservationFailedEvent.class);
         typeMapper.setIdClassMapping(mappings);
         converter.setTypeMapper(typeMapper);
         return converter;

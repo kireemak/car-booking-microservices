@@ -2,16 +2,16 @@ package by.kireenko.BookingService.services;
 
 
 import by.kireenko.BookingService.client.CarServiceClient;
-import by.kireenko.BookingService.dto.BookingDto;
-import by.kireenko.BookingService.dto.CarDto;
-import by.kireenko.BookingService.dto.CreateBookingRequestDto;
-import by.kireenko.BookingService.dto.UpdateBookingRequestDto;
-import by.kireenko.BookingService.error.NotValidResourceState;
+import by.kireenko.BookingService.dto.*;
+import by.kireenko.BookingService.dto.event.BookingRequestedEvent;
 import by.kireenko.BookingService.error.ResourceNotFoundException;
 import by.kireenko.BookingService.kafka.BookingEventPublisher;
 import by.kireenko.BookingService.models.Booking;
+import by.kireenko.BookingService.models.OutboxEvent;
 import by.kireenko.BookingService.models.UserView;
 import by.kireenko.BookingService.repositories.BookingRepository;
+import by.kireenko.BookingService.repositories.OutboxEventRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -35,14 +36,19 @@ public class BookingService {
     private final BookingRepository bookingRepository;
     private final UserViewService userViewService;
     private final BookingEventPublisher bookingEventPublisher;
+    private final OutboxEventRepository outboxEventRepository;
+    private final ObjectMapper objectMapper;
 
     @Autowired
     public BookingService(CarServiceClient carServiceClient, BookingRepository bookingRepository,
-                          UserViewService userViewService, BookingEventPublisher bookingEventPublisher) {
+                          UserViewService userViewService, BookingEventPublisher bookingEventPublisher,
+                          OutboxEventRepository outboxEventRepository, ObjectMapper objectMapper) {
         this.carServiceClient = carServiceClient;
         this.bookingRepository = bookingRepository;
         this.userViewService = userViewService;
         this.bookingEventPublisher = bookingEventPublisher;
+        this.outboxEventRepository = outboxEventRepository;
+        this.objectMapper = objectMapper;
     }
 
     public List<Booking> getAllBookings() {
@@ -168,9 +174,9 @@ public class BookingService {
             throw new AccessDeniedException("You can't update this booking");
         }
 
-        if (!existingBooking.getStatus().equals("Created")) {
+        if (!existingBooking.getStatus().equals("Created") && !existingBooking.getStatus().equals("PENDING")) {
             log.error("Booking {} status is not valid: {}", id, existingBooking.getStatus());
-            throw new IllegalStateException("Only bookings with status CREATED can be updated");
+            throw new IllegalStateException("Only CREATED or PENDING bookings can be updated");
         }
 
         if (updatedBookingRequest.getStartDate() != null)
@@ -182,7 +188,11 @@ public class BookingService {
 
         Booking updatedBooking = bookingRepository.save(existingBooking);
 
-        bookingEventPublisher.sendBookingUpdatedEvent(updatedBooking);
+        saveOutboxEvent(
+                updatedBooking.getId().toString(),
+                "bookingUpdated",
+                new BookingEventDto(updatedBooking)
+        );
 
         return updatedBooking;
     }
@@ -197,32 +207,34 @@ public class BookingService {
             throw new AccessDeniedException("You can't delete this booking");
         }
 
-        if (!(booking.getStatus().equals("Created") || booking.getStatus().equals("Cancelled"))) {
+        if (!(booking.getStatus().equals("Created") || booking.getStatus().equals("Cancelled") || booking.getStatus().equals("PENDING"))) {
             log.error("Booking {} status is not valid: {}", id, booking.getStatus());
-            throw new IllegalStateException("Only CREATED or CANCELLED bookings can be deleted");
+            throw new IllegalStateException("Only CREATED, PENDING, or CANCELLED bookings can be deleted");
         }
 
-        bookingEventPublisher.sendBookingDeletedEvent(id);
+        saveOutboxEvent(id.toString(), "bookingDeleted", null);
 
         bookingRepository.deleteById(id);
     }
 
     @Transactional(readOnly = false)
     public Booking createBookingWithCheck(CreateBookingRequestDto bookingRequestDto) {
-        try {
-            carServiceClient.reserveCar(bookingRequestDto.getCarId());
-        } catch (WebClientResponseException.Forbidden e) {
-            log.warn("Failed to reserve car {} because it was not available.", bookingRequestDto.getCarId());
-            throw new NotValidResourceState("Car is not available for booking.");
-        }
+        UserView userView = userViewService.getCurrentUserView();
 
-        try {
-            return createBooking(bookingRequestDto);
-        } catch(Exception e) {
-            log.error("Error creating booking. Executing compensation: Releasing car {}", bookingRequestDto.getCarId(), e);
-            carServiceClient.releaseCar(bookingRequestDto.getCarId());
-            throw e;
-        }
+        Booking booking = new Booking();
+        booking.setCarId(bookingRequestDto.getCarId());
+        booking.setUserView(userView);
+        booking.setStartDate(bookingRequestDto.getStartDate());
+        booking.setEndDate(bookingRequestDto.getEndDate());
+        booking.setStatus("PENDING");
+
+        Booking savedBooking = bookingRepository.save(booking);
+
+        bookingEventPublisher.sendBookingRequestedEvent(
+                new BookingRequestedEvent(savedBooking.getId(), savedBooking.getCarId())
+        );
+
+        return savedBooking;
     }
 
     @Transactional(readOnly = false)
@@ -239,7 +251,12 @@ public class BookingService {
 
         booking.setStatus("Completed");
         Booking completedBooking = bookingRepository.save(booking);
-        bookingEventPublisher.sendBookingUpdatedEvent(completedBooking);
+
+        saveOutboxEvent(
+                completedBooking.getId().toString(),
+                "bookingCompleted",
+                new BookingEventDto(completedBooking)
+        );
 
         return completedBooking;
     }
@@ -248,5 +265,45 @@ public class BookingService {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         boolean isAdmin = authentication.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN"));
         return !isAdmin && !userView.getId().equals(booking.getUserView().getId());
+    }
+
+    private void saveOutboxEvent(String aggregateId, String eventType, Object payload) {
+        try {
+            String jsonPayload = payload != null ? objectMapper.writeValueAsString(payload) : "null";
+
+            OutboxEvent outboxEvent = OutboxEvent.builder()
+                    .aggregateType("Booking")
+                    .aggregateId(aggregateId)
+                    .eventType(eventType)
+                    .payload(jsonPayload)
+                    .createdAt(LocalDateTime.now())
+                    .processed(false)
+                    .build();
+
+            outboxEventRepository.save(outboxEvent);
+        } catch (Exception e) {
+            log.error("Failed to serialize Outbox event for booking {}", aggregateId, e);
+            throw new RuntimeException("Could not create outbox event", e);
+        }
+    }
+
+    @Transactional(readOnly = false)
+    public void confirmBookingSaga(Long bookingId) {
+        Booking booking = getBookingWithLockById(bookingId);
+        booking.setStatus("Created"); // Or "Confirmed"
+        Booking updatedBooking = bookingRepository.save(booking);
+
+        saveOutboxEvent(updatedBooking.getId().toString(), "booking", new BookingEventDto(updatedBooking));
+        log.info("Saga Complete: Booking {} confirmed internally.", bookingId);
+    }
+
+    @Transactional(readOnly = false)
+    public void rejectBookingSaga(Long bookingId, String reason) {
+        Booking booking = getBookingWithLockById(bookingId);
+        booking.setStatus("Cancelled");
+        Booking updatedBooking = bookingRepository.save(booking);
+
+        saveOutboxEvent(updatedBooking.getId().toString(), "booking", null);
+        log.warn("Saga Compensated: Booking {} rejected. Reason: {}", bookingId, reason);
     }
 }

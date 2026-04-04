@@ -13,7 +13,7 @@ import java.time.LocalDate;
 @Getter
 @Setter
 @NoArgsConstructor
-@ToString(exclude = {"user"})
+@ToString(exclude = {"userView"})
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Booking implements Serializable {
     @Id

@@ -2,11 +2,16 @@ package by.kireenko.CarService.services;
 
 import by.kireenko.CarService.dto.CarDto;
 import by.kireenko.CarService.dto.CarRequestDto;
+import by.kireenko.CarService.dto.event.CarReservationFailedEvent;
+import by.kireenko.CarService.dto.event.CarReservedEvent;
 import by.kireenko.CarService.error.NotValidResourceState;
 import by.kireenko.CarService.error.ResourceNotFoundException;
 import by.kireenko.CarService.kafka.CarEventProducer;
 import by.kireenko.CarService.models.Car;
+import by.kireenko.CarService.models.OutboxEvent;
 import by.kireenko.CarService.repositories.CarRepository;
+import by.kireenko.CarService.repositories.OutboxEventRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
@@ -16,6 +21,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -28,12 +34,17 @@ public class CarService {
     private final CarRepository carRepository;
     private final CarEventProducer carEventProducer;
     private final CarService self;
+    private final OutboxEventRepository outboxEventRepository;
+    private final ObjectMapper objectMapper;
 
     @Autowired
-    public CarService(CarRepository carRepository, CarEventProducer carEventProducer, @Lazy CarService self) {
+    public CarService(CarRepository carRepository, CarEventProducer carEventProducer, @Lazy CarService self,
+                      OutboxEventRepository outboxEventRepository, ObjectMapper objectMapper) {
         this.carRepository = carRepository;
         this.carEventProducer = carEventProducer;
         this.self = self;
+        this.outboxEventRepository = outboxEventRepository;
+        this.objectMapper = objectMapper;
     }
 
     public List<Car> getAllCars() {
@@ -173,6 +184,51 @@ public class CarService {
         List<CarDto> carDtoList = new ArrayList<>();
         getAvailableCars().forEach(car -> carDtoList.add(new CarDto(car)));
         return carDtoList;
+    }
+
+    private void saveOutboxEvent(String aggregateId, String eventType, Object payload) {
+        try {
+            String jsonPayload = payload != null ? objectMapper.writeValueAsString(payload) : "null";
+            OutboxEvent outboxEvent = OutboxEvent.builder()
+                    .aggregateType("Car")
+                    .aggregateId(aggregateId)
+                    .eventType(eventType)
+                    .payload(jsonPayload)
+                    .createdAt(LocalDateTime.now())
+                    .processed(false)
+                    .build();
+            outboxEventRepository.save(outboxEvent);
+        } catch (Exception e) {
+            log.error("Failed to serialize Outbox event for car {}", aggregateId, e);
+            throw new RuntimeException("Could not create outbox event", e);
+        }
+    }
+
+    @Transactional(readOnly = false)
+    public void processSagaReservation(Long bookingId, Long carId) {
+        try {
+            Car car = carRepository.findAndLockById(carId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Car", "id", carId));
+
+            if (!car.getStatus().equals("Available")) {
+                saveOutboxEvent(bookingId.toString(), "carReservationFailed",
+                        new CarReservationFailedEvent(bookingId, carId, "Car is not available"));
+                return;
+            }
+
+            car.setStatus("Rented");
+            Car updatedCar = carRepository.save(car);
+
+            saveOutboxEvent(bookingId.toString(), "carReserved",
+                    new CarReservedEvent(bookingId, carId));
+
+            saveOutboxEvent(updatedCar.getId().toString(), "car", new CarDto(updatedCar));
+
+        } catch (Exception e) {
+            log.error("Saga reservation failed for booking {}", bookingId, e);
+            saveOutboxEvent(bookingId.toString(), "carReservationFailed",
+                    new CarReservationFailedEvent(bookingId, carId, e.getMessage()));
+        }
     }
 }
 
