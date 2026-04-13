@@ -96,6 +96,8 @@ services:
         condition: service_started
       eureka-server:
         condition: service_started
+      zipkin:
+        condition: service_started
     ports:
       - "8081:8081"
     environment:
@@ -107,6 +109,8 @@ services:
       SPRING_CLOUD_VAULT_TOKEN: my-root-token
       SPRING_DATA_REDIS_HOST: redis
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka
+      MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: http://zipkin:9411/api/v2/spans
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
 
   booking-service:
     build:
@@ -124,6 +128,8 @@ services:
         condition: service_started
       eureka-server:
         condition: service_started
+      zipkin:
+        condition: service_started
     ports:
       - "8082:8082"
     environment:
@@ -135,6 +141,8 @@ services:
       SPRING_CLOUD_VAULT_TOKEN: my-root-token
       SPRING_DATA_REDIS_HOST: redis
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka
+      MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: http://zipkin:9411/api/v2/spans
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
 
   car-service:
     build:
@@ -152,6 +160,8 @@ services:
         condition: service_started
       eureka-server:
         condition: service_started
+      zipkin:
+        condition: service_started
     ports:
       - "8083:8083"
     environment:
@@ -163,6 +173,8 @@ services:
       SPRING_CLOUD_VAULT_TOKEN: my-root-token
       SPRING_DATA_REDIS_HOST: redis
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: http://zipkin:9411/api/v2/spans
 
   car-details-service:
     build:
@@ -180,6 +192,8 @@ services:
         condition: service_completed_successfully
       redis:
         condition: service_started
+      zipkin:
+        condition: service_started
     ports:
       - "8084:8084"
     environment:
@@ -189,6 +203,8 @@ services:
       SPRING_CLOUD_VAULT_TOKEN: my-root-token
       SPRING_DATA_REDIS_HOST: redis
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka
+      MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: http://zipkin:9411/api/v2/spans
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
 
   gateway-service:
     build:
@@ -210,12 +226,25 @@ services:
         condition: service_completed_successfully
       eureka-server:
         condition: service_started
+      zipkin:
+        condition: service_started
+      redis:
+        condition: service_started
     environment:
       SERVER_PORT: 8080
       SPRING_CLOUD_VAULT_URI: http://vault:8200
       SPRING_CLOUD_VAULT_TOKEN: my-root-token
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka
+      MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: http://zipkin:9411/api/v2/spans
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
     restart: unless-stopped
+
+  zipkin:
+    image: openzipkin/zipkin:latest
+    container_name: zipkin
+    ports:
+      - "9411:9411"
 
 volumes:
   pgdata:

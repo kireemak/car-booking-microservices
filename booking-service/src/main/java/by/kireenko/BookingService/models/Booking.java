@@ -3,9 +3,11 @@ package by.kireenko.BookingService.models;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 
 @Entity
@@ -37,4 +39,8 @@ public class Booking implements Serializable {
 
     @Column(nullable = false, length = 20)
     private String status;
+
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
 }

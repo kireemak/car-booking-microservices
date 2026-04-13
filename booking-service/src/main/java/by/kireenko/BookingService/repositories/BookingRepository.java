@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,4 +16,6 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     Optional<Booking> findAndLockById(Long id);
 
     List<Booking> findByUserViewId(Long userId);
+
+    List<Booking> findByStatusAndCreatedAtBefore(String status, LocalDateTime cutoffTime);
 }
