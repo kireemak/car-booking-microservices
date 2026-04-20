@@ -1,6 +1,5 @@
 package by.kireenko.BookingService.services;
 
-
 import by.kireenko.BookingService.client.CarServiceClient;
 import by.kireenko.BookingService.dto.*;
 import by.kireenko.BookingService.dto.event.BookingRequestedEvent;
@@ -20,7 +19,6 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -155,11 +153,12 @@ public class BookingService {
         booking.setUserView(userView);
         booking.setStartDate(bookingRequestDto.getStartDate());
         booking.setEndDate(bookingRequestDto.getEndDate());
-        booking.setStatus("Created");
+        booking.setStatus("PENDING");
 
         Booking createdBooking = bookingRepository.save(booking);
 
-        bookingEventPublisher.sendBookingCreatedEvent(createdBooking);
+        bookingEventPublisher.sendBookingRequestedEvent(new BookingRequestedEvent(createdBooking.getId(),
+                createdBooking.getCarId()));
 
         return createdBooking;
     }
@@ -290,7 +289,7 @@ public class BookingService {
     @Transactional(readOnly = false)
     public void confirmBookingSaga(Long bookingId) {
         Booking booking = getBookingWithLockById(bookingId);
-        booking.setStatus("Created"); // Or "Confirmed"
+        booking.setStatus("Created");
         Booking updatedBooking = bookingRepository.save(booking);
 
         saveOutboxEvent(updatedBooking.getId().toString(), "booking", new BookingEventDto(updatedBooking));
