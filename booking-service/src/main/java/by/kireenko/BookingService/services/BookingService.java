@@ -140,29 +140,6 @@ public class BookingService {
         return booking;
     }
 
-    @Transactional
-    public Booking createBooking(CreateBookingRequestDto bookingRequestDto) {
-        UserView userView = userViewService.getCurrentUserView();
-        CarDto carDto = carServiceClient.getCarById(bookingRequestDto.getCarId());
-        if (carDto == null) {
-            throw new ResourceNotFoundException("Car", "id", bookingRequestDto.getCarId());
-        }
-
-        Booking booking = new Booking();
-        booking.setCarId(bookingRequestDto.getCarId());
-        booking.setUserView(userView);
-        booking.setStartDate(bookingRequestDto.getStartDate());
-        booking.setEndDate(bookingRequestDto.getEndDate());
-        booking.setStatus("PENDING");
-
-        Booking createdBooking = bookingRepository.save(booking);
-
-        bookingEventPublisher.sendBookingRequestedEvent(new BookingRequestedEvent(createdBooking.getId(),
-                createdBooking.getCarId()));
-
-        return createdBooking;
-    }
-
     @Transactional(readOnly = false)
     public Booking updateBooking(Long id, UpdateBookingRequestDto updatedBookingRequest) {
         UserView userView = userViewService.getCurrentUserView();
@@ -217,7 +194,7 @@ public class BookingService {
     }
 
     @Transactional(readOnly = false)
-    public Booking createBookingWithCheck(CreateBookingRequestDto bookingRequestDto) {
+    public Booking createBooking(CreateBookingRequestDto bookingRequestDto) {
         UserView userView = userViewService.getCurrentUserView();
 
         Booking booking = new Booking();
@@ -245,8 +222,6 @@ public class BookingService {
             log.warn("Access denied for user {} to complete booking {}", userView.getId(), bookingId);
             throw new AccessDeniedException("You can't complete this booking");
         }
-
-        carServiceClient.releaseCar(booking.getCarId());
 
         booking.setStatus("Completed");
         Booking completedBooking = bookingRepository.save(booking);

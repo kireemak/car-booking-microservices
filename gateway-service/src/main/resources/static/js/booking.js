@@ -20,7 +20,7 @@ document.getElementById('bookingForm')?.addEventListener('submit', async (event)
     }
 
     try {
-        const response = await fetch('http://localhost:8080/api/bookings/create-with-check', {
+        const response = await fetch('http://localhost:8080/api/bookings', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

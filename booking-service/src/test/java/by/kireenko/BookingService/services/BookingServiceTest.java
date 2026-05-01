@@ -1,4 +1,4 @@
-package services;
+package by.kireenko.BookingService.services;
 
 import by.kireenko.BookingService.client.CarServiceClient;
 import by.kireenko.BookingService.dto.CarDto;
@@ -92,7 +92,7 @@ public class BookingServiceTest {
     }
 
     @Test
-    public void createBookingWithCheck_ShouldSavePendingBookingAndPublishEvent() {
+    public void createBooking_ShouldSavePendingBookingAndPublishEvent() {
         Long carId = 1L;
         CreateBookingRequestDto request = new CreateBookingRequestDto();
         request.setCarId(carId);
@@ -109,7 +109,7 @@ public class BookingServiceTest {
             return b;
         });
 
-        Booking result = bookingService.createBookingWithCheck(request);
+        Booking result = bookingService.createBooking(request);
 
         assertThat(result).isNotNull();
         assertThat(result.getCarId()).isEqualTo(carId);

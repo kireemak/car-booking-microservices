@@ -48,12 +48,6 @@ public class BookingController {
         return bookingDtoConverter.convertToDto(bookingService.getBookingById(id));
     }
 
-    @PostMapping
-    @Operation(summary = "Create a booking", description = "Creates a new booking for the current user.")
-    public BookingDto createBooking(@RequestBody CreateBookingRequestDto bookingRequestDto) {
-        return bookingDtoConverter.convertToDto(bookingService.createBooking(bookingRequestDto));
-    }
-
     @PutMapping("/{id}")
     @Operation(summary = "Update a booking", description = "Updates an existing booking. Can only be done for bookings with 'Created' status.")
     public BookingDto updateBooking(@PathVariable Long id, @RequestBody UpdateBookingRequestDto updateBookingRequest) {
@@ -66,10 +60,10 @@ public class BookingController {
         bookingService.deleteBooking(id);
     }
 
-    @PostMapping("/create-with-check")
+    @PostMapping()
     @Operation(summary = "Create a booking with availability check", description = "Creates a booking only if the car is available and updates the car's status to 'Rented'.")
     public BookingDto createBookingWithCheck(@RequestBody CreateBookingRequestDto bookingRequestDto) {
-        return bookingDtoConverter.convertToDto(bookingService.createBookingWithCheck(bookingRequestDto));
+        return bookingDtoConverter.convertToDto(bookingService.createBooking(bookingRequestDto));
     }
 
     @PutMapping("/{id}/complete")
