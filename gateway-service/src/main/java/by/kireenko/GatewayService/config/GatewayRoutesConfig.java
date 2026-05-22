@@ -49,6 +49,19 @@ public class GatewayRoutesConfig {
                         .filters(f -> f.filter(authenticationFilter)
                                 .requestRateLimiter(c -> c.setRateLimiter(rateLimiter).setKeyResolver(keyResolver)))
                         .uri("lb://booking-service"))
+
+                .route("openapi-user-service", r -> r.path("/v3/api-docs/user-service")
+                        .filters(f -> f.rewritePath("/v3/api-docs/user-service", "/v3/api-docs"))
+                        .uri("lb://user-service"))
+                .route("openapi-car-service", r -> r.path("/v3/api-docs/car-service")
+                        .filters(f -> f.rewritePath("/v3/api-docs/car-service", "/v3/api-docs"))
+                        .uri("lb://car-service"))
+                .route("openapi-car-details-service", r -> r.path("/v3/api-docs/car-details-service")
+                        .filters(f -> f.rewritePath("/v3/api-docs/car-details-service", "/v3/api-docs"))
+                        .uri("lb://car-details-service"))
+                .route("openapi-booking-service", r -> r.path("/v3/api-docs/booking-service")
+                        .filters(f -> f.rewritePath("/v3/api-docs/booking-service", "/v3/api-docs"))
+                        .uri("lb://booking-service"))
                 .build();
     }
 }

@@ -41,7 +41,8 @@ public class CarOutboxRelayScheduler {
                     payload = objectMapper.readValue(outboxEvent.getPayload(), eventClass);
                 }
 
-                kafkaTemplate.send(topic, outboxEvent.getAggregateId(), payload);
+                kafkaTemplate.send(topic, outboxEvent.getAggregateId(), payload)
+                        .get(5, java.util.concurrent.TimeUnit.SECONDS);
 
                 outboxEvent.setProcessed(true);
                 outboxEventRepository.save(outboxEvent);

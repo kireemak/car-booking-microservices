@@ -206,7 +206,9 @@ public class BookingService {
 
         Booking savedBooking = bookingRepository.save(booking);
 
-        bookingEventPublisher.sendBookingRequestedEvent(
+        saveOutboxEvent(
+                savedBooking.getId().toString(),
+                "bookingRequested",
                 new BookingRequestedEvent(savedBooking.getId(), savedBooking.getCarId())
         );
 
