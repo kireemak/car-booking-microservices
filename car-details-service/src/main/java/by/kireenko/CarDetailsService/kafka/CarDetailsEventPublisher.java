@@ -1,6 +1,5 @@
 package by.kireenko.CarDetailsService.kafka;
 
-import by.kireenko.CarDetailsService.config.KafkaConfig;
 import by.kireenko.CarDetailsService.config.KafkaTopicConfig;
 import by.kireenko.CarDetailsService.dto.CarDetailsDto;
 import by.kireenko.CarDetailsService.models.CarDetails;

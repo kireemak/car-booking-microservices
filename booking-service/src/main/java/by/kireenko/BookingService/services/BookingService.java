@@ -265,7 +265,9 @@ public class BookingService {
 
     @Transactional(readOnly = false)
     public void confirmBookingSaga(Long bookingId) {
-        Booking booking = getBookingWithLockById(bookingId);
+        Booking booking = bookingRepository.findAndLockById(bookingId).orElseThrow(
+                () -> new ResourceNotFoundException("Booking", "id", bookingId)
+        );
         booking.setStatus("Created");
         Booking updatedBooking = bookingRepository.save(booking);
 
@@ -275,7 +277,9 @@ public class BookingService {
 
     @Transactional(readOnly = false)
     public void rejectBookingSaga(Long bookingId, String reason) {
-        Booking booking = getBookingWithLockById(bookingId);
+        Booking booking = bookingRepository.findAndLockById(bookingId).orElseThrow(
+                () -> new ResourceNotFoundException("Booking", "id", bookingId)
+        );
         booking.setStatus("Cancelled");
         Booking updatedBooking = bookingRepository.save(booking);
 

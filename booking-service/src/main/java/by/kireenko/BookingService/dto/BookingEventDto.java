@@ -2,11 +2,15 @@ package by.kireenko.BookingService.dto;
 
 import by.kireenko.BookingService.models.Booking;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Schema(description = "DTO for Kafka events related to a booking. Contains only the carId, not the full car object.")
 public class BookingEventDto {
 

@@ -30,9 +30,8 @@ public class OutboxRelayScheduler {
             try {
                 String topic = switch (outboxEvent.getEventType()) {
                     case "bookingRequested" -> "booking-requests-topic";
-                    case "bookingCreated" -> "booking-events-topic";
-                    case "bookingUpdated", "bookingCompleted" -> "booking-events-topic";
-                    case "bookingDeleted" -> "booking-events-topic";
+                    case "bookingCreated", "booking", "bookingUpdated",
+                         "bookingCompleted", "bookingDeleted" -> "booking-events-topic";
                     default -> throw new IllegalArgumentException("Unknown event type: " + outboxEvent.getEventType());
                 };
 
@@ -42,12 +41,14 @@ public class OutboxRelayScheduler {
                     payload = objectMapper.readValue(outboxEvent.getPayload(), eventClass);
                 }
 
-                kafkaTemplate.send(topic, outboxEvent.getAggregateId(), payload);
+                kafkaTemplate.send(topic, outboxEvent.getAggregateId(), payload)
+                        .get(5, java.util.concurrent.TimeUnit.SECONDS);
 
                 outboxEvent.setProcessed(true);
                 outboxEventRepository.save(outboxEvent);
 
-                log.info("Successfully processed outbox event: ID {}, Type {}", outboxEvent.getId(), outboxEvent.getEventType());
+                log.info("Successfully processed outbox event: ID {}, Type {}",
+                        outboxEvent.getId(), outboxEvent.getEventType());
 
             } catch (Exception e) {
                 log.error("Failed to process outbox event ID {}. It will be retried.", outboxEvent.getId(), e);
