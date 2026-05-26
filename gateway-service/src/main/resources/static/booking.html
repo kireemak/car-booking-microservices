@@ -10,20 +10,26 @@
 <body>
 <div class="container">
     <h1>Create Booking</h1>
-    <form id="bookingForm">
-        <label for="carId">Car ID:</label>
-        <input type="number" id="carId" name="carId" required>
+    <form data-ui="booking-form">
+        <label for="carId">Select Car:</label>
+        <select id="carId" name="carId" required>
+            <option value="" disabled selected>Loading available cars...</option>
+        </select>
         <br/>
+
         <label for="startDate">Start Date:</label>
         <input type="date" id="startDate" name="startDate" required>
         <br/>
+
         <label for="endDate">End Date:</label>
         <input type="date" id="endDate" name="endDate" required>
         <br/>
+
         <button type="submit">Create Booking</button>
     </form>
-    <div id="bookingResult"></div>
+    <div data-target="booking-result"></div>
 
+    <br/>
     <a href="index.html">Back to Available Cars</a>
 </div>
 </body>

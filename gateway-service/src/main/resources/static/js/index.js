@@ -23,7 +23,9 @@ async function loadAvailableCars() {
         }
 
         const cars = await response.json();
-        const tableBody = document.getElementById('carsTable').querySelector('tbody');
+
+        // Single clean query selector using data attribute
+        const tableBody = document.querySelector('[data-ui="available-cars-table"] tbody');
         tableBody.innerHTML = '';
 
         cars.forEach(car => {

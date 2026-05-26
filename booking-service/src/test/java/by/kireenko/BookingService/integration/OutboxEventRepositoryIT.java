@@ -11,7 +11,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class OutboxEventRepositoryTest extends AbstractIntegrationTest {
+class OutboxEventRepositoryIT extends AbstractIntegrationTest {
 
     @Autowired
     private OutboxEventRepository outboxEventRepository;

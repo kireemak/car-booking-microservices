@@ -1,6 +1,7 @@
-const modal = document.getElementById('detailsModal');
-const closeModalButton = document.getElementById('closeModalButton');
-const reviewForm = document.getElementById('reviewForm');
+// Global Selectors using data attributes
+const modal = document.querySelector('[data-modal="car-details"]');
+const closeModalButton = document.querySelector('[data-action="close-modal"]');
+const reviewForm = document.querySelector('[data-ui="review-form"]');
 
 async function loadCars() {
     const token = localStorage.getItem('jwtToken');
@@ -17,7 +18,7 @@ async function loadCars() {
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
         const cars = await response.json();
-        const tableBody = document.getElementById('carsTableBody');
+        const tableBody = document.querySelector('[data-ui="cars-table-body"]');
         tableBody.innerHTML = '';
 
         cars.forEach(car => {
@@ -49,19 +50,19 @@ async function openDetailsModal(carId) {
 
         const details = await response.json();
 
-        document.getElementById('modalCarTitle').textContent = `Details for Car #${carId}`;
+        // Populate Modal Data
+        document.querySelector('[data-target="modal-title"]').textContent = `Details for Car #${carId}`;
 
-        // Отображаем основную информацию
-        const detailsContainer = document.getElementById('modalCarDetails');
+        const detailsContainer = document.querySelector('[data-target="modal-details"]');
         detailsContainer.innerHTML = `<p><b>Description:</b> ${details.description || 'No description available'}</p>`;
+
         if (details.features) {
             detailsContainer.innerHTML += '<b>Features:</b><ul>' +
                 Object.entries(details.features).map(([key, value]) => `<li>${key}: ${value}</li>`).join('') +
                 '</ul>';
         }
 
-        // Отображаем отзывы
-        const reviewsContainer = document.getElementById('modalCarReviews');
+        const reviewsContainer = document.querySelector('[data-target="modal-reviews"]');
         if (details.reviews && details.reviews.length > 0) {
             reviewsContainer.innerHTML = '<ul>' +
                 details.reviews.map(r => `<li><b>${r.username}</b> (Rating: ${r.rating}/5): ${r.comment}</li>`).join('') +
@@ -70,14 +71,17 @@ async function openDetailsModal(carId) {
             reviewsContainer.innerHTML = '<p>No reviews yet.</p>';
         }
 
-        document.getElementById('reviewCarId').value = carId;
+        // Set hidden input value using Form API
+        reviewForm.elements['carId'].value = carId;
         modal.style.display = 'block';
+
     } catch (error) {
         console.error('Error loading car details:', error);
         alert('Failed to load car details.');
     }
 }
 
+// Modal closing logic
 closeModalButton.onclick = () => {
     modal.style.display = 'none';
 };
@@ -88,14 +92,16 @@ window.onclick = (event) => {
     }
 };
 
+// Review Submission
 reviewForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const carId = document.getElementById('reviewCarId').value;
     const token = localStorage.getItem('jwtToken');
 
+    // Extract values cleanly using the Form API
+    const carId = reviewForm.elements['carId'].value;
     const reviewData = {
-        rating: parseInt(document.getElementById('rating').value, 10),
-        comment: document.getElementById('comment').value
+        rating: parseInt(reviewForm.elements['rating'].value, 10),
+        comment: reviewForm.elements['comment'].value
     };
 
     try {
@@ -111,7 +117,7 @@ reviewForm.addEventListener('submit', async (e) => {
 
         alert('Thank you for your review!');
         reviewForm.reset();
-        openDetailsModal(carId);
+        openDetailsModal(carId); // Reload modal to show new review
 
     } catch (error) {
         console.error('Error submitting review:', error);

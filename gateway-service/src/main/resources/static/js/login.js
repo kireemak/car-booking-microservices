@@ -1,8 +1,11 @@
-document.getElementById("loginForm").addEventListener("submit", async function(event) {
+const loginForm = document.querySelector('[data-ui="login-form"]');
+
+loginForm.addEventListener("submit", async function(event) {
     event.preventDefault();
 
-    const name = document.getElementById("loginUsername").value;
-    const password = document.getElementById("loginPassword").value;
+    // Access inputs cleanly using the Form API and their 'name' attributes
+    const name = loginForm.elements['username'].value;
+    const password = loginForm.elements['password'].value;
 
     try {
         const response = await fetch("http://localhost:8080/api/auth/login", {
